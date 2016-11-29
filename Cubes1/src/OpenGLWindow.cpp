@@ -1,0 +1,168 @@
+/*
+ * Basic GL Window modified from the example here
+ * http://qt-project.org/doc/qt-5.0/qtgui/openglwindow.html
+ * adapted to use NGL
+ */
+#include "OpenGLWindow.h"
+#include <QtCore/QCoreApplication>
+#include <QtGui/QOpenGLContext>
+#include <QtGui/QOpenGLPaintDevice>
+#include <QtGui/QPainter>
+#include <QKeyEvent>
+#include <QApplication>
+#include <iostream>
+#ifdef __APPLE__
+  #include <glu.h>
+#else
+  #include <GL/glu.h>
+#endif
+
+// ctor
+OpenGLWindow::OpenGLWindow()
+{
+  setTitle("Qt5 compat profile OpenGL 2.1");
+}
+// dtor
+OpenGLWindow::~OpenGLWindow()
+{
+}
+
+void OpenGLWindow::initializeGL()
+{
+  glMatrixMode(GL_PROJECTION);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_NORMALIZE);
+
+  int w=this->size().width();
+  int h=this->size().height();
+  gluPerspective(60,(float)w/h,0.5,100);
+  glMatrixMode(GL_MODELVIEW);
+  gluLookAt(4,4,4,0,0,0,0,1,0);
+
+  glViewport(0,0,width(),height());
+  startTimer(10);
+
+}
+
+void OpenGLWindow::drawCube(float _w, float _h, float _d)
+{
+  float w2 = _w/2.0f;
+  float h2 = _h/2.0f;
+  float d2 = _d/2.0f;
+
+  glBegin(GL_TRIANGLES);
+
+  //front face
+  glColor3f(1,0,0);
+  glVertex3d(-w2, h2, d2); //D
+  glVertex3d(-w2, -h2, d2); //A
+  glVertex3d(w2, -h2, d2); //B
+
+  glVertex3d(-w2, h2, d2); //D
+  glVertex3d(w2, h2, d2); //C
+  glVertex3d(w2, -h2, d2); //B
+
+  //back face
+  glVertex3d(-w2, h2, -d2); //D
+  glVertex3d(-w2, -h2, -d2); //E
+  glVertex3d(w2, -h2, -d2); //B
+
+  glVertex3d(-w2, h2, -d2); //H
+  glVertex3d(w2, h2, -d2); //C
+  glVertex3d(w2, -h2, -d2); //B
+
+  //left face
+  glColor3f(0,1,0);
+  glVertex3d(-w2, h2, d2); //D
+  glVertex3d(-w2, -h2, d2); //A
+  glVertex3d(-w2, -h2, -d2); //E
+
+  glVertex3d(-w2, h2, -d2); //H
+  glVertex3d(-w2, h2, d2); //D
+  glVertex3d(-w2, -h2, -d2); //E
+
+  //right face
+  glVertex3d(w2, h2, d2); //D
+  glVertex3d(w2, -h2, d2); //A
+  glVertex3d(w2, -h2, -d2); //E
+
+  glVertex3d(w2, h2, -d2); //H
+  glVertex3d(w2, h2, d2); //D
+  glVertex3d(w2, -h2, -d2); //E
+
+  //top face
+  glColor3f(0,0,1);
+  glVertex3d(-w2, h2, d2); //D
+  glVertex3d(w2, h2, -d2); //G
+  glVertex3d(-w2, h2, -d2); //H
+
+  glVertex3d(-w2, h2, d2); //D
+  glVertex3d(w2, h2, d2); //C
+  glVertex3d(w2, h2, -d2); //G
+
+  //bottom face
+  glVertex3d(-w2, -h2, d2); //D
+  glVertex3d(w2, -h2, -d2); //G
+  glVertex3d(-w2, -h2, -d2); //H
+
+  glVertex3d(-w2, -h2, d2); //D
+  glVertex3d(w2, -h2, d2); //C
+  glVertex3d(w2, -h2, -d2); //G
+
+  glEnd();
+
+}
+
+
+void OpenGLWindow::paintGL()
+{
+  glViewport(0,0,m_width,m_height);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  for(int i=-5; i<5; ++i)
+  {
+    for(int j=-5; j<5; ++j)
+    {
+      for(int k=-5; k<5; ++k)
+      {
+        glPushMatrix();
+          glRotated(rot,0,1,0);
+          glTranslated(i,j,k);
+          glScalef(0.1,0.1,0.1);
+
+          glPushMatrix();
+          glRotatef(rand(),1,1,1);
+
+            drawCube(1.0f,1.0f,1.0f);
+          glPopMatrix();
+
+        glPopMatrix();
+      }
+    }
+  }
+
+ // ++rot;
+}
+
+void OpenGLWindow::timerEvent(QTimerEvent *)
+{
+  rot++;
+  update();
+}
+
+void OpenGLWindow::keyPressEvent(QKeyEvent *_event)
+{
+  switch (_event->key())
+  {
+   case Qt::Key_Escape : QApplication::exit(EXIT_SUCCESS); break;
+  }
+}
+
+
+void OpenGLWindow::resizeGL(int _w, int _h)
+{
+
+  m_width=_w;
+  m_height=_h;
+
+}
+
